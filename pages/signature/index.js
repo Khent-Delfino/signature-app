@@ -29,7 +29,6 @@ export default function Signature() {
     function drawOnCanvas(){
         cnvSize.current.h = window.innerHeight * 0.5 > 200 ? 200 : window.innerHeight * 0.5;
         cnvSize.current.w = window.innerWidth * 0.9 > 600 ? 600 : window.innerWidth * 0.9;
-        // cnvSize.current.w = window.innerWidth;
 
         canvasRef.current.width = cnvSize.current.w;
         canvasRef.current.height = cnvSize.current.h;
@@ -43,28 +42,43 @@ export default function Signature() {
 
     const onMouseDown = (e) => {
         isPainting.current = true;
-        posRef.current.x = e.clientX;
-        posRef.current.y = e.clientY;
+        if(e.type == 'touchmove'){
+            posRef.current.x = e.touches[0].clientX;
+            posRef.current.y = e.touches[0].clientY;
+        }else{
+            posRef.current.x = e.clientX;
+            posRef.current.y = e.clientY;
+        }
     }
 
     const onMouseMove = (e) => {
         if (!isPainting.current) return;
-        drawLine(posRef.current.x, posRef.current.y, e.clientX, e.clientY);
-        posRef.current.x = e.clientX;
-        posRef.current.y = e.clientY;
+        drawLine(posRef.current.x, posRef.current.y, e);
+        if(e.type == 'touchmove'){
+            posRef.current.x = e.touches[0].clientX;
+            posRef.current.y = e.touches[0].clientY;
+        }else{
+            posRef.current.x = e.clientX;
+            posRef.current.y = e.clientY;
+        }    
     }
     const onMouseUp = (e) => {
         if (!isPainting.current) return;
         isPainting.current = false;
-        drawLine(posRef.current.x, posRef.current.y, e.clientX, e.clientY);
+        drawLine(posRef.current.x, posRef.current.y, e);
     }
 
-    const drawLine = (x0, y0, x1, y1) => {
+    const drawLine = (x0, y0, e) => {
         const rect = canvasRef.current.getBoundingClientRect();
 
         ctxRef.current.beginPath();
-        ctxRef.current.moveTo(x0 - rect.left, y0 - rect.top);
-        ctxRef.current.lineTo(x1 - rect.left, y1 - rect.top);
+        if(e.type == 'touchmove'){
+            ctxRef.current.moveTo(x0 - rect.left, y0 - rect.top);
+            ctxRef.current.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+        }else{
+            ctxRef.current.moveTo(x0 - rect.left, y0 - rect.top);
+            ctxRef.current.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
         ctxRef.current.stroke();
         ctxRef.current.closePath();
         ctxRef.current.save();
@@ -87,6 +101,9 @@ export default function Signature() {
                 onMouseDown={onMouseDown}
                 onMouseMove={onMouseMove}
                 onMouseUp={onMouseUp}
+                onTouchStart={onMouseDown}
+                onTouchMove={onMouseMove}
+                onTouchEnd={onMouseUp}
                 className="canvas mt-2" 
             ></canvas>
             <div
